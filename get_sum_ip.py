@@ -54,10 +54,25 @@ def get_besfcf_ip(timeout=5, max_retries=3):
 #
 if __name__ == '__main__':
     cfips = get_optimization_ip()
+    if cfips != []:
+        print('cfips获取成功')
+    else:
+        print('cfips获取失败')
     iptop = get_iptop_ip()
-    besfcf = get_besfcf_ip()
-    sum_ip = cfips + iptop + besfcf
+    if iptop != []:
+        print('iptop获取成功')
+    else:
+        print('iptop获取失败')
+    bestcf = get_besfcf_ip()
+    if bestcf != []:
+        print('bestcf获取成功')
+    else:
+        print('bestcf获取失败')
+    sum_ip_set = set(cfips + iptop + bestcf)
+    sum_ip = list(sum_ip_set)
+
     with open('sum_ip.txt', 'w') as file:
         # 遍历列表，写入每个IP地址，每个地址后面添加换行符
         for ip in sum_ip:
             file.write(ip + '\n')
+    print('完成写入sum_ip.txt')

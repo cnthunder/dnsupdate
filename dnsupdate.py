@@ -22,7 +22,7 @@ headers = {
 #定义筛选的最低速度MB/s
 speed_limit = 8
 #定义测试结果文件名
-speed_top10 = "/home/dnsupdate/speed_top10.txt"
+speed_top10 = 'speed_top10.txt'
 
 # 定义根据下载速度对IP数据进行排序的函数
 def sort_ips_by_speed(ips):
@@ -54,7 +54,6 @@ def parse_ips(filename, encoding='utf-8'):
                         ip_info[headers[i]] = value
                 if ip_info['下载速度 (MB/s)'] > speed_limit:
                     ips.append(ip_info)
-                    print(ips)
     except FileNotFoundError:
         print(f"文件 {filename} 未找到，请检查路径是否正确。")
     except Exception as e:
@@ -155,9 +154,9 @@ def main():
     ip_addresses = get_fast_ip()
     if ip_addresses == None:
         print(f"测速结果低于{speed_limit},不更新")
+        push_plus(f"测速结果低于{speed_limit},不更新")
         return None
     else:
-        # print(ip_addresses)
         dns_records = get_dns_records(CF_DNS_NAME)
         # 创建一个空列表来存储所有的id
         dns_records_id = []
@@ -165,20 +164,32 @@ def main():
         for record in dns_records:
             dns_records_id.append(record['id'])
             dns_records_ip.append(record['content'])
-        # print(dns_records_id)
-        # print(dns_records_ip)
         dns_records_ip_set = set(dns_records_ip)
         ip_addresses_set = set(ip_addresses)
         common_ips = dns_records_ip_set & ip_addresses_set
-        if common_ips:
-            print("DNS记录IP地址未变，不更新：", common_ips)
+        if len(common_ips) == 2:
+            common_ips = list(common_ips)
+            print(f"DNS记录IP地址未变，不更新：\n{common_ips[0]}, {common_ips[1]}")
+            push_plus(f"DNS记录IP地址未变，不更新：\n{common_ips[0]}, {common_ips[1]}")
+        elif len(common_ips) == 1:
+            single_ip_set = set(ip_addresses) - common_ips
+            single_ip = list(single_ip_set)
+            common_ips = list(common_ips)
+            print(f'已存在的一条解析不更新：{common_ips[0]}')
+            push_plus_content = [f'已存在的一条解析不更新：{common_ips[0]}']
+            for comm_ip in dns_records:
+                if comm_ip['content'] != common_ips[0]:
+                    single_dns_records_id = comm_ip['id']
+                    dns = update_dns_record(single_dns_records_id, CF_DNS_NAME, single_ip[0])
+                    push_plus_content.append(dns + '\n')
+            push_plus('\n'.join(push_plus_content))
         else:
             push_plus_content = []
             # 遍历 IP 地址列表
             for index, ip_address in enumerate(ip_addresses):
                 # 执行 DNS 变更
                 dns = update_dns_record(dns_records_id[index], CF_DNS_NAME, ip_address)
-                push_plus_content.append(dns)
+                push_plus_content.append(dns + '\n')
             push_plus('\n'.join(push_plus_content))
 
 if __name__ == '__main__':

@@ -46,9 +46,43 @@ def get_fast_ip():
         print("没有有效的IP数据可以处理。")
         return None
 
+# 将当前DNS解析结果也加进来
+import socket
+
+def get_now_ip(domain='cf-best.sino-v.xyz'):
+    try:
+        # 获取所有地址信息列表
+        now_ip_dns = socket.getaddrinfo(domain, None)
+        # 使用集合来存储解析到的IP地址，自动去重
+        now_ips_set = set()
+
+        # 解析地址信息，提取IP地址，并添加到集合中
+        for addr in now_ip_dns:
+            af, socktype, proto, canonname, sa = addr
+            ip = sa[0]  # 获取IP地址
+            now_ips_set.add(ip)
+
+        # 打印当前解析的IP地址
+        print(f"当前{domain}的解析地址为: {now_ips_set}")
+
+        # 将集合转换为列表（如果需要的话），并返回
+        return list(now_ips_set)
+
+    except Exception as e:
+        # 打印错误信息，并返回空列表
+        print(f"解析发生错误：{e}")
+        return []
+
+
+
 if __name__ == '__main__':
     top10ips = get_fast_ip()
+    now_ips = get_now_ip()
+    # 当前DNS的2个IP与top10的10个IP合并，去重后并写入文件
+    top10_now_ips_set = set(top10ips + now_ips)
+    top10_now_ips = list(top10_now_ips_set)
     with open('/home/dnsupdate/httping_top10.txt', 'w') as file:
         # 遍历列表，写入每个IP地址，每个地址后面添加换行符
-        for ip in top10ips:
+        for ip in top10_now_ips:
             file.write(ip + '\n')
+    print('完成写入httping_top10.txt')
