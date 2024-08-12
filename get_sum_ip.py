@@ -57,7 +57,7 @@ if __name__ == '__main__':
     iptop = get_iptop_ip()
     besfcf = get_besfcf_ip()
     sum_ip = cfips + iptop + besfcf
-    with open(r'sum_ip.txt', 'w') as file:
+    with open('sum_ip.txt', 'w') as file:
         # 遍历列表，写入每个IP地址，每个地址后面添加换行符
         for ip in sum_ip:
             file.write(ip + '\n')
