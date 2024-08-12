@@ -1,0 +1,21 @@
+name: 'get_sum_ip'
+
+on:
+  schedule:
+    - cron: '*/30 * * * *' # every 4h
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v3
+      - name: 'Set up Python'
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.7
+      - name: 'Install dependencies'
+        run: if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: 'get_sum_ip'
+        run: python get_sum_ip.py
