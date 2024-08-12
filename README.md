@@ -1,6 +1,7 @@
-配合https://github.com/XIU2/CloudflareSpeedTest用的
+配合https://github.com/XIU2/CloudflareSpeedTest  用的
 
 #!/bin/bash
+
 #汇总线上的bestcf代理IP
 
 python /home/dnsupdate/py_script/get_sum_ip.py
