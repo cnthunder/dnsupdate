@@ -1,8 +1,8 @@
-name: 'get_sum_ip'
+name: get_sum_ip
 
 on:
   schedule:
-    - cron: '*/30 * * * *' # every 4h
+    - cron: '*/30 * * * *' # every 30min
   workflow_dispatch:
 
 jobs:
@@ -11,11 +11,22 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v3
+        with:
+          ref: 'master' # 确保检出到 master 分支
       - name: 'Set up Python'
         uses: actions/setup-python@v4
         with:
           python-version: 3.7
       - name: 'Install dependencies'
         run: if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      - name: 'get_sum_ip'
+      - name: 'Run get_sum_ip script'
         run: python get_sum_ip.py
+      - name: 'Push sum_ip.txt to master'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "cnthunder"
+          git config user.email "cnthunder@foxmail.com"
+          git add sum_ip.txt
+          git commit -m "Add sum_ip.txt"
+          git push origin master
