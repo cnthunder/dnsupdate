@@ -51,7 +51,7 @@ def get_besfcf_ip(timeout=5, max_retries=3):
             print(f"get_cf_speed_test_ip Request failed (attempt {attempt + 1}/{max_retries}): {e}")
     # 如果所有尝试都失败，返回 None 或者抛出异常，根据需要进行处理
     return []
-
+#
 if __name__ == '__main__':
     cfips = get_optimization_ip()
     iptop = get_iptop_ip()
