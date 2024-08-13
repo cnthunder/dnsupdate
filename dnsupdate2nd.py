@@ -25,7 +25,7 @@ speed_limit = 8
 speed_top = 50
 #定义测试结果文件名
 speed_top10 = 'speed_top10.txt'
-
+topspeed_file = 'topspeed.txt'
 # 定义根据下载速度对IP数据进行排序的函数
 def sort_ips_by_speed(ips):
     return sorted(ips, key=lambda x: x['下载速度 (MB/s)'], reverse=True)
@@ -55,7 +55,7 @@ def parse_ips(filename, encoding='utf-8'):
                     elif headers[i] == 'IP 地址':  # IP地址列
                         ip_info[headers[i]] = value
                 if ip_info['下载速度 (MB/s)'] > speed_top:
-                    with open('speed.txt', 'a', encoding='utf-8') as file:
+                    with open(topspeed_file, 'a', encoding='utf-8') as file:
                         file.write(f"{ip_info}\n")
                 elif ip_info['下载速度 (MB/s)'] > speed_limit:
                     ips.append(ip_info)
@@ -242,6 +242,34 @@ def main():
                 print(f"重合的2ND，不更新：\n{common_ips[0]}, {common_ips[1]}")
                 push_plus_content.append('重合的2ND，不更新：' + '\n' + f'{common_ips[0]}, {common_ips[1]}')
             push_plus('\n'.join(push_plus_content))
+    with open(topspeed_file, 'r', encoding='utf-8') as file:
+        lines = file.readlines()
+
+    # 定义一个用于存储去重后数据的列表
+    unique_data = []
+
+    # 定义一个用于存储已经出现过的IP地址的集合
+    seen_ips = set()
+
+    # 遍历每一行数据
+    for line in lines:
+        # 将字符串转换为字典
+        item = eval(line.strip())
+
+        # 获取IP地址
+        ip_address = item['IP 地址']
+
+        # 检查IP地址是否已经出现过
+        if ip_address not in seen_ips:
+            # 如果没有出现过，添加到已见集合和去重列表
+            seen_ips.add(ip_address)
+            unique_data.append(item)
+
+    # 将去重后的数据写回文件
+    with open(topspeed_file, 'w', encoding='utf-8') as file:
+        for item in unique_data:
+            # 将字典转换回字符串并写入文件
+            file.write(str(item) + '\n')
 
 if __name__ == '__main__':
     main()
