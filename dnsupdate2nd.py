@@ -22,6 +22,7 @@ headers = {
 
 #定义筛选的最低速度MB/s
 speed_limit = 8
+speed_top = 50
 #定义测试结果文件名
 speed_top10 = 'speed_top10.txt'
 
@@ -53,7 +54,10 @@ def parse_ips(filename, encoding='utf-8'):
                         ip_info[headers[i]] = float(value)
                     elif headers[i] == 'IP 地址':  # IP地址列
                         ip_info[headers[i]] = value
-                if ip_info['下载速度 (MB/s)'] > speed_limit:
+                if ip_info['下载速度 (MB/s)'] > speed_top:
+                    with open('speed.txt', 'a', encoding='utf-8') as file:
+                        file.write(f"{ip_info}\n")
+                elif ip_info['下载速度 (MB/s)'] > speed_limit:
                     ips.append(ip_info)
     except FileNotFoundError:
         print(f"文件 {filename} 未找到，请检查路径是否正确。")
