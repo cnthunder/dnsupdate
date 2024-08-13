@@ -1,16 +1,22 @@
-# 这是一个示例 Python 脚本。
+import socket
 
-# 按 Shift+F10 执行或将其替换为您的代码。
-# 按 双击 Shift 在所有地方搜索类、文件、工具窗口、操作和设置。
+# 域名
+domain = 'cf-best.sino-v.xyz'
 
+try:
+    # 获取所有地址信息列表
+    addresses = socket.getaddrinfo(domain, None)
 
-def print_hi(name):
-    # 在下面的代码行中使用断点来调试脚本。
-    print(f'Hi, {name}')  # 按 Ctrl+F8 切换断点。
+    # 准备存储解析到的IP地址列表
+    ip_addresses = []
 
+    # 解析地址信息
+    for addr in addresses:
+        af, socktype, proto, canonname, sa = addr
+        ip = sa[0]  # 获取IP地址
+        ip_addresses.append(ip)
 
-# 按装订区域中的绿色按钮以运行脚本。
-if __name__ == '__main__':
-    print_hi('PyCharm')
+    print(f"当前{domain}的解析地址为{ip_addresses} ")
 
-# 访问 https://www.jetbrains.com/help/pycharm/ 获取 PyCharm 帮助
+except socket.gaierror as e:
+    print(f"无法解析域名: {e}")

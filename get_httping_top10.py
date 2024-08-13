@@ -35,13 +35,13 @@ def parse_ips(filename, encoding='utf-8'):
 
 # 主函数
 def get_fast_ip():
-    filename = "/home/dnsupdate/httping.txt"  # 设置文件路径
+    filename = "httping.txt"  # 设置文件路径
     encoding = 'utf-8'  # 根据你的文件编码设置
     ips = parse_ips(filename)
     if ips:
         sorted_ips = sort_ips_by_speed(ips)
         iplist = select_top10_ips(sorted_ips)
-        return iplist
+        return set(iplist)
     else:
         print("没有有效的IP数据可以处理。")
         return None
@@ -49,7 +49,7 @@ def get_fast_ip():
 # 将当前DNS解析结果也加进来
 import socket
 
-def get_now_ip(domain='cf-best.sino-v.xyz'):
+def get_now_ip(domain):
     try:
         # 获取所有地址信息列表
         now_ip_dns = socket.getaddrinfo(domain, None)
@@ -66,22 +66,23 @@ def get_now_ip(domain='cf-best.sino-v.xyz'):
         print(f"当前{domain}的解析地址为: {now_ips_set}")
 
         # 将集合转换为列表（如果需要的话），并返回
-        return list(now_ips_set)
+        return set(now_ips_set)
 
     except Exception as e:
         # 打印错误信息，并返回空列表
         print(f"解析发生错误：{e}")
-        return []
+        return set()
 
 
 
 if __name__ == '__main__':
     top10ips = get_fast_ip()
-    now_ips = get_now_ip()
+    now_ips = get_now_ip('cf-best.sino-v.xyz')
+    now_ips2nd = get_now_ip('cf-best2nd.sino-v.xyz')
     # 当前DNS的2个IP与top10的10个IP合并，去重后并写入文件
-    top10_now_ips_set = set(top10ips + now_ips)
+    top10_now_ips_set = top10ips | now_ips | now_ips2nd
     top10_now_ips = list(top10_now_ips_set)
-    with open('/home/dnsupdate/httping_top10.txt', 'w') as file:
+    with open('httping_top10.txt', 'w') as file:
         # 遍历列表，写入每个IP地址，每个地址后面添加换行符
         for ip in top10_now_ips:
             file.write(ip + '\n')
