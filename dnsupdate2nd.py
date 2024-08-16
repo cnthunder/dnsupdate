@@ -23,6 +23,7 @@ headers = {
 # 定义筛选的最低速度MB/s
 speed_limit = 40
 speed_top = 50
+latency = 80
 # 定义测试结果文件名
 speed_top10 = 'speed_top10.txt'
 top_speed_info = 'top_speed_info.txt'
@@ -43,8 +44,9 @@ def select_top_two_ips(sorted_ips):
         # 将 IP 地址添加到 top_two_ips 列表中
         top_two_ips.append(ip)
         # 将IP 地址和对应的下载速度加入到push_plus_content
-        push_plus_content.append(f'IP为{ip}，速度为{ip_info["下载速度 (MB/s)"]}MB/s' + '\n')
+        push_plus_content.append(f'IP为{ip}，平均延迟为{ip_info["平均延迟"]}ms，速度为{ip_info["下载速度 (MB/s)"]}MB/s' + '\n')
     # 返回前两个 IP 地址的列表
+    print(push_plus_content)
     return top_two_ips, push_plus_content
 
 # 定义解析IP数据的函数
@@ -67,7 +69,7 @@ def parse_ips(filename, encoding='utf-8'):
                         ip_info[headers[i]] = float(value)
                     elif headers[i] == 'IP 地址':  # IP地址列
                         ip_info[headers[i]] = value
-                if ip_info['下载速度 (MB/s)'] > speed_top:
+                if ip_info['下载速度 (MB/s)'] > speed_top and ip_info['平均延迟'] < latency:
                     with open(top_speed_info, 'a', encoding='utf-8') as file:
                         file.write(f"{ip_info}\n")
                 if ip_info['下载速度 (MB/s)'] > speed_limit:
