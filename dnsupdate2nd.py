@@ -20,19 +20,32 @@ headers = {
     'Content-Type': 'application/json'
 }
 
-#定义筛选的最低速度MB/s
-speed_limit = 8
+# 定义筛选的最低速度MB/s
+speed_limit = 40
 speed_top = 50
-#定义测试结果文件名
+# 定义测试结果文件名
 speed_top10 = 'speed_top10.txt'
-topspeed_file = 'topspeed.txt'
+top_speed_info = 'top_speed_info.txt'
+# 定义push_plus_content
+push_plus_content = []
+
 # 定义根据下载速度对IP数据进行排序的函数
 def sort_ips_by_speed(ips):
     return sorted(ips, key=lambda x: x['下载速度 (MB/s)'], reverse=True)
 
 # 定义选择下载速度最快的两个IP的函数
 def select_top_two_ips(sorted_ips):
-    return [ip['IP 地址'] for ip in sorted_ips[:2]]
+    # 初始化一个空列表来存储前两个 IP 地址
+    top_two_ips = []
+    # 遍历排序后的列表的前两个元素
+    for i, ip_info in enumerate(sorted_ips[:2]):
+        ip = ip_info['IP 地址']
+        # 将 IP 地址添加到 top_two_ips 列表中
+        top_two_ips.append(ip)
+        # 将IP 地址和对应的下载速度加入到push_plus_content
+        push_plus_content.append(f'IP为{ip}，速度为{ip_info["下载速度 (MB/s)"]}MB/s' + '\n')
+    # 返回前两个 IP 地址的列表
+    return top_two_ips, push_plus_content
 
 # 定义解析IP数据的函数
 def parse_ips(filename, encoding='utf-8'):
@@ -55,9 +68,9 @@ def parse_ips(filename, encoding='utf-8'):
                     elif headers[i] == 'IP 地址':  # IP地址列
                         ip_info[headers[i]] = value
                 if ip_info['下载速度 (MB/s)'] > speed_top:
-                    with open(topspeed_file, 'a', encoding='utf-8') as file:
+                    with open(top_speed_info, 'a', encoding='utf-8') as file:
                         file.write(f"{ip_info}\n")
-                elif ip_info['下载速度 (MB/s)'] > speed_limit:
+                if ip_info['下载速度 (MB/s)'] > speed_limit:
                     ips.append(ip_info)
     except FileNotFoundError:
         print(f"文件 {filename} 未找到，请检查路径是否正确。")
@@ -72,11 +85,11 @@ def get_fast_ip():
     ips = parse_ips(filename)
     if ips:
         sorted_ips = sort_ips_by_speed(ips)
-        iplist = select_top_two_ips(sorted_ips)
-        return iplist
+        iplist, push_plus_content = select_top_two_ips(sorted_ips)
+        return iplist, push_plus_content
     else:
         print("没有有效的IP数据可以处理。")
-        return None
+        return None, []
 
 # 获取 DNS 记录
 def get_dns_records(name):
@@ -156,12 +169,59 @@ def push_plus(content):
 # 主函数
 def main():
     # 获取最新优选IP，下载速度的top2
-    ip_addresses = get_fast_ip()
-    print(f'TOP2的地址为：{ip_addresses}')
-    if ip_addresses == None:
+    top2_ips, push_plus_content = get_fast_ip()
+    print(f'TOP2的地址为：{top2_ips}')
+    if top2_ips == None:
         print(f"测速结果低于{speed_limit},不更新")
         push_plus(f"测速结果低于{speed_limit},不更新")
         return None
+    elif len(top2_ips) == 1:
+        dns_records = get_dns_records(CF_DNS_NAME)
+        dns_records2nd = get_dns_records(CF_DNS_NAME2ND)
+        # # 获取1st的id跟ip
+        dns_records_id = []
+        dns_records_ip = []
+        for record in dns_records:
+            dns_records_id.append(record['id'])
+            dns_records_ip.append(record['content'])
+        # 获取2nd的id跟ip
+        dns_records_id2nd = []
+        dns_records_ip2nd = []
+        for record2nd in dns_records2nd:
+            dns_records_id2nd.append(record2nd['id'])
+            dns_records_ip2nd.append(record2nd['content'])
+        # 将top2跟1st的ip利用set去重
+        dns_records_ip_set = set(dns_records_ip)
+        top2_ips_set = set(top2_ips)
+        # 去重后的common_ips为set
+        common_ips = dns_records_ip_set & top2_ips_set
+        # 如果common_ips为1个，则说明top2跟1st没变
+        if len(common_ips) == 1:
+            common_ips = list(common_ips)
+            print(f"DNS记录IP地址未变，不更新：\n{common_ips[0]}")
+            push_plus_content.append('DNS记录IP地址未变，不更新：' + '\n')
+            push_plus_content.append(f'{common_ips[0]}' + '\n')
+            push_plus('\n'.join(push_plus_content))
+        else:
+            single_ip = top2_ips
+            common_ips = list(common_ips)
+            for comm_ip in dns_records:
+                # 获取需要更新的A记录的id，并将被刷新的ip记录给2nd
+                single_dns_records_id = comm_ip['id']
+                single_old_ip = comm_ip['content']
+                dns = update_dns_record(single_dns_records_id, CF_DNS_NAME, single_ip[0])
+                push_plus_content.append(dns + '\n')
+                # 利用set判断single_old_ip是否存在于2nd中
+                common2nd_ips = set(dns_records_ip2nd) | {single_old_ip}
+                if len(common2nd_ips) > 2:
+                    # 将被刷新的single_old_ip更新给对应的2nd的第1条
+                    dns2nd = update_dns_record(dns_records_id2nd[0], CF_DNS_NAME2ND, single_old_ip)
+                    push_plus_content.append(dns2nd + '\n')
+                else:
+                    print(f'被刷新的ip已存在，不更新至2nd：{single_old_ip}')
+                    push_plus_content.append('被刷新的ip已存在，不更新至2nd：' + '\n')
+                    push_plus_content.append(f'{single_old_ip}' + '\n')
+            push_plus('\n'.join(push_plus_content))
     else:
         dns_records = get_dns_records(CF_DNS_NAME)
         dns_records2nd = get_dns_records(CF_DNS_NAME2ND)
@@ -179,21 +239,24 @@ def main():
             dns_records_ip2nd.append(record2nd['content'])
         # 将top2跟1st的ip利用set去重
         dns_records_ip_set = set(dns_records_ip)
-        ip_addresses_set = set(ip_addresses)
+        top2_ips_set = set(top2_ips)
         # 去重后的common_ips为set
-        common_ips = dns_records_ip_set & ip_addresses_set
+        common_ips = dns_records_ip_set & top2_ips_set
         # 如果common_ips为2个，则说明top2跟1st没变
         if len(common_ips) == 2:
             common_ips = list(common_ips)
             print(f"DNS记录IP地址未变，不更新：\n{common_ips[0]}, {common_ips[1]}")
-            push_plus('DNS记录IP地址未变，不更新：' + '\n' + f'{common_ips[0]}, {common_ips[1]}')
+            push_plus_content.append('DNS记录IP地址未变，不更新：' + '\n')
+            push_plus_content.append(f'{common_ips[0]}, {common_ips[1]}' + '\n')
+            push_plus('\n'.join(push_plus_content))
         # 如果common_ips为1个，则说明top2跟1st中需要更新1个，同时，将被刷新的single_old_ip更新给对应的2nd的第1条
         elif len(common_ips) == 1:
-            single_ip_set = set(ip_addresses) - common_ips
+            single_ip_set = set(top2_ips) - common_ips
             single_ip = list(single_ip_set)
             common_ips = list(common_ips)
             print(f'已存在的一条解析不更新：{common_ips[0]}')
-            push_plus_content = [f'已存在的一条解析不更新：{common_ips[0]}' + '\n']
+            push_plus_content.append('已存在的一条解析不更新：' + '\n')
+            push_plus_content.append(f'{common_ips[0]}' + '\n')
             for comm_ip in dns_records:
                 # 获取需要更新的A记录的id，并将被刷新的ip记录给2nd
                 if comm_ip['content'] != common_ips[0]:
@@ -209,11 +272,12 @@ def main():
                         push_plus_content.append(dns2nd + '\n')
                     else:
                         print(f'被刷新的ip已存在，不更新至2nd：{single_old_ip}')
+                        push_plus_content.append('被刷新的ip已存在，不更新至2nd：' + '\n')
+                        push_plus_content.append(f'{single_old_ip}' + '\n')
             push_plus('\n'.join(push_plus_content))
         else:
-            push_plus_content = []
             # 遍历 IP 地址列表
-            for index, ip_address in enumerate(ip_addresses):
+            for index, ip_address in enumerate(top2_ips):
                 # 执行 DNS 变更
                 dns = update_dns_record(dns_records_id[index], CF_DNS_NAME, ip_address)
                 push_plus_content.append(dns + '\n')
@@ -236,13 +300,15 @@ def main():
                         push_plus_content.append(dns + '\n')
                     else:
                         print(f'已存在的2nd，不更新：{ip_address}')
-                        push_plus_content.append(f'已存在的2nd，不更新：{ip_address}' + '\n')
+                        push_plus_content.append(f'已存在的2nd，不更新' + '\n')
+                        push_plus_content.append(f'{ip_address}' + '\n')
             if len(common_ips) == 2:
                 common_ips = list(common_ips)
                 print(f"重合的2ND，不更新：\n{common_ips[0]}, {common_ips[1]}")
-                push_plus_content.append('重合的2ND，不更新：' + '\n' + f'{common_ips[0]}, {common_ips[1]}')
+                push_plus_content.append('重合的2ND，不更新：' + '\n')
+                push_plus_content.append(f'{common_ips[0]}, {common_ips[1]}' + '\n')
             push_plus('\n'.join(push_plus_content))
-    with open(topspeed_file, 'r', encoding='utf-8') as file:
+    with open(top_speed_info, 'r', encoding='utf-8') as file:
         lines = file.readlines()
 
     # 定义一个用于存储去重后数据的列表
@@ -266,7 +332,7 @@ def main():
             unique_data.append(item)
 
     # 将去重后的数据写回文件
-    with open(topspeed_file, 'w', encoding='utf-8') as file:
+    with open(top_speed_info, 'w', encoding='utf-8') as file:
         for item in unique_data:
             # 将字典转换回字符串并写入文件
             file.write(str(item) + '\n')
