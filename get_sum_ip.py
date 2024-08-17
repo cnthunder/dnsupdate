@@ -41,7 +41,7 @@ def get_besfcf_ip(timeout=5, max_retries=3):
     for attempt in range(max_retries):
         try:
             # 发送 GET 请求，设置超时
-            response = requests.get('https://raw.githubusercontent.com/ymyuuu/IPDB/main/bestcf.txt', timeout=timeout)
+            response = requests.get('https://ipdb.api.030101.xyz/?type=bestcf', timeout=timeout)
             # 检查响应状态码
             besfcf_src = response.text
             besfcf_ips = besfcf_src.split()
