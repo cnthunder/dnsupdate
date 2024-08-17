@@ -1,5 +1,15 @@
 配合https://github.com/XIU2/CloudflareSpeedTest  用的
 
+参考并借鉴了：
+
+https://github.com/ymyuuu/IPDB
+
+https://github.com/ZhiXuanWang/cf-speed-dns
+
+https://github.com/ddgth/cf2dns
+
+感谢以上大佬的无私分享~
+
 get_sum_ip.py可以在action里跑，但是好像意义不大，我自己没用，因为在本地跑就够了。
 
 dnsupdate脚本里有设置将下载测速大于50并且延迟低于80的IP保存到本地，方便建立自己的最快CF地址存档，等这个地址池够多了，应该就不需要再通过get_sum_ip去获取优选IP了，直接从这个文件里取IP就行，这就手动保存一次到sum_ip.txt里就行了，懒得再写一个脚本了
