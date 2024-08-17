@@ -108,6 +108,7 @@ def get_dns_records(name):
                     'content': record['content']
                 }
                 dns_records_info.append(dns_record)
+                print(f'ID：{record["id"]}，DNS：{record["name"]}，IP：{record["content"]}，上次更新时间：{record["modified_on"]}')
         return dns_records_info
     else:
         print('Error fetching DNS records:', response.text)
@@ -128,8 +129,8 @@ def update_dns_record(record_id, name, cf_ip):
 
         # 如果成功
         print(f"cf_dns_change success: ---- Time: " + str(
-            time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())) + " ---- ip：" + str(cf_ip))
-        return "ip:" + str(cf_ip) + "解析" + str(name) + "成功"
+            time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())) + " ---- ip：" + str(cf_ip) + " ---- id：" + str(record_id))
+        return "ip:" + str(cf_ip) + "(id:" + str(record_id) + ")" + "\n" + "解析" + str(name) + "成功"
     except requests.exceptions.HTTPError as http_err:
         # 处理 HTTP 错误
         print(f"HTTP error occurred: {http_err} - Status code: {response.status_code}")
@@ -149,8 +150,8 @@ def update_dns_record(record_id, name, cf_ip):
 
     # 返回错误信息
     print(f"cf_dns_change ERROR: ---- Time: " + str(
-        time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
-    return "ip:" + str(cf_ip) + "解析" + str(name) + "失败"
+        time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))+ " ---- ip：" + str(cf_ip) + " ---- id：" + str(record_id))
+    return "ip:" + str(cf_ip) + "(id:" + str(record_id) + ")" + "\n" + "解析" + str(name) + "失败"
 
 # 注意：上面的代码片段假定 headers 变量已经被定义，并且包含了正确的 Authorization 和 Content-Type 头信息。
 
@@ -207,24 +208,27 @@ def main():
         else:
             single_ip = top2_ips
             common_ips = list(common_ips)
+            count = 0
             for comm_ip in dns_records:
                 # 获取需要更新的A记录的id，并将被刷新的ip记录给2nd
-                single_dns_records_id = comm_ip['id']
-                single_old_ip = comm_ip['content']
-                dns = update_dns_record(single_dns_records_id, CF_DNS_NAME, single_ip[0])
-                push_plus_content.append(dns + '\n')
-                # 利用set判断single_old_ip是否存在于2nd中
-                common2nd_ips = set(dns_records_ip2nd) | {single_old_ip}
-                if len(common2nd_ips) > 2:
-                    # 将被刷新的single_old_ip更新给对应的2nd的第1条
-                    dns2nd = update_dns_record(dns_records_id2nd[0], CF_DNS_NAME2ND, single_old_ip)
-                    push_plus_content.append(dns2nd + '\n')
-                else:
-                    print(f'被刷新的ip已存在，不更新至2nd：{single_old_ip}')
-                    push_plus_content.append('被刷新的ip已存在，不更新至2nd：' + '\n')
-                    push_plus_content.append(f'{single_old_ip}' + '\n')
+                if count == 0:
+                    count += 1
+                    single_dns_records_id = comm_ip['id']
+                    single_old_ip = comm_ip['content']
+                    dns = update_dns_record(single_dns_records_id, CF_DNS_NAME, single_ip[0])
+                    push_plus_content.append(dns + '\n')
+                    # 利用set判断single_old_ip是否存在于2nd中
+                    common2nd_ips = set(dns_records_ip2nd) | {single_old_ip}
+                    if len(common2nd_ips) > 2:
+                        # 将被刷新的single_old_ip更新给对应的2nd的第1条
+                        dns2nd = update_dns_record(dns_records_id2nd[0], CF_DNS_NAME2ND, single_old_ip)
+                        push_plus_content.append(dns2nd + '\n')
+                    else:
+                        print(f'被刷新的ip已存在，不更新至2nd：{single_old_ip}')
+                        push_plus_content.append('被刷新的ip已存在，不更新至2nd：' + '\n')
+                        push_plus_content.append(f'{single_old_ip}' + '\n')
             push_plus('\n'.join(push_plus_content))
-    else:
+    elif len(top2_ips) == 2:
         dns_records = get_dns_records(CF_DNS_NAME)
         dns_records2nd = get_dns_records(CF_DNS_NAME2ND)
         # # 获取1st的id跟ip
