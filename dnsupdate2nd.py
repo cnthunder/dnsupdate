@@ -314,32 +314,33 @@ def main():
                 push_plus_content.append('重合的2ND，不更新：' + '\n')
                 push_plus_content.append(f'{common_ips[0]}, {common_ips[1]}' + '\n')
             push_plus('\n'.join(push_plus_content))
+    # 重写top_speed_info，保留下载速度最大的数据并去重，然后按下载速度进行排序
     with open(top_speed_info, 'r', encoding='utf-8') as file:
         lines = file.readlines()
 
-    # 定义一个用于存储去重后数据的列表
-    unique_data = []
-
-    # 定义一个用于存储已经出现过的IP地址的集合
-    seen_ips = set()
+    # 定义一个用于存储去重后数据的字典
+    seen_ips = {}
 
     # 遍历每一行数据
     for line in lines:
         # 将字符串转换为字典
         item = eval(line.strip())
 
-        # 获取IP地址
+        # 获取IP地址和下载速度
         ip_address = item['IP 地址']
+        download_speed = item.get('下载速度 (MB/s)', 0)  # 使用get方法提供默认值以防该键不存在
 
-        # 检查IP地址是否已经出现过
-        if ip_address not in seen_ips:
-            # 如果没有出现过，添加到已见集合和去重列表
-            seen_ips.add(ip_address)
-            unique_data.append(item)
+        # 检查IP地址是否已经出现过，或者当前下载速度是否更大
+        if ip_address not in seen_ips or download_speed > seen_ips[ip_address].get('下载速度 (MB/s)'):
+            # 更新字典，保留最大下载速度的条目
+            seen_ips[ip_address] = item
 
-    # 将去重后的数据写回文件
+    # 将字典的值（去重后的数据）转换为列表，并按下载速度从大到小排序
+    unique_data_sorted = sorted(seen_ips.values(), key=lambda x: x.get('下载速度 (MB/s)', 0), reverse=True)
+
+    # 将排序后的数据写回文件
     with open(top_speed_info, 'w', encoding='utf-8') as file:
-        for item in unique_data:
+        for item in unique_data_sorted:
             # 将字典转换回字符串并写入文件
             file.write(str(item) + '\n')
 
