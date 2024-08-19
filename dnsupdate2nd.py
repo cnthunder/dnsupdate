@@ -3,6 +3,10 @@ import traceback
 import json
 import requests
 import time
+from datetime import datetime
+
+# 获取当前时间
+current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 # API 密钥
 token_ini = configparser.ConfigParser()
@@ -71,6 +75,7 @@ def parse_ips(filename, encoding='utf-8'):
                         ip_info[headers[i]] = value
                 if ip_info['下载速度 (MB/s)'] > speed_top and ip_info['平均延迟'] < latency:
                     with open(top_speed_info, 'a', encoding='utf-8') as file:
+                        ip_info['修改时间'] = current_time
                         file.write(f"{ip_info}\n")
                 if ip_info['下载速度 (MB/s)'] > speed_limit:
                     ips.append(ip_info)
