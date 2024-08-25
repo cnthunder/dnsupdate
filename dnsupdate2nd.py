@@ -73,11 +73,13 @@ def parse_ips(filename, encoding='utf-8'):
                         ip_info[headers[i]] = float(value)
                     elif headers[i] == 'IP 地址':  # IP地址列
                         ip_info[headers[i]] = value
+                # 测速及延迟达标的，写入tops_peed_info文件；
                 if ip_info['下载速度 (MB/s)'] > speed_top and ip_info['平均延迟'] < latency:
-                    with open(top_speed_info, 'a', encoding='utf-8') as file:
+                    with open(top_speed_info, 'a', encoding='utf-8') as top_speed_file:
                         ip_info['修改时间'] = current_time
-                        file.write(f"{ip_info}\n")
-                if ip_info['下载速度 (MB/s)'] > speed_limit:
+                        top_speed_file.write(f"{ip_info}\n")
+                # 测速及延迟达标的，返回测速ip信息；
+                if ip_info['下载速度 (MB/s)'] > speed_limit and ip_info['平均延迟'] < latency:
                     ips.append(ip_info)
     except FileNotFoundError:
         print(f"文件 {filename} 未找到，请检查路径是否正确。")
