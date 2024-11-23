@@ -35,7 +35,7 @@ def parse_ips(filename, encoding='utf-8'):
 
 # 主函数
 def get_fast_ip():
-    filename = "/home/dnsupdate/httping.txt"  # 设置文件路径
+    filename = "../httping.txt"  # 设置文件路径
     encoding = 'utf-8'  # 根据你的文件编码设置
     ips = parse_ips(filename)
     if ips:
@@ -77,12 +77,19 @@ def get_now_ip(domain):
 
 if __name__ == '__main__':
     top10ips = get_fast_ip()
-    now_ips = get_now_ip('cf-best.sino-v.xyz')
-    now_ips2nd = get_now_ip('cf-best2nd.sino-v.xyz')
+    import sys
+    if len(sys.argv) != 3:
+        print("Usage: python script.py <domain1> <domain2>")
+        sys.exit(1)
+    # 获取命令行参数
+    domain1, domain2 = sys.argv[1], sys.argv[2]
+    # 查询domain1跟domain2的ip解析
+    now_ips = get_now_ip(domain1)
+    now_ips2nd = get_now_ip(domain2)
     # 当前DNS的4个IP与top10的10个IP合并，去重后并写入文件
     top10_now_ips_set = top10ips | now_ips | now_ips2nd
     top10_now_ips = list(top10_now_ips_set)
-    with open('/home/dnsupdate/httping_top10.txt', 'w') as file:
+    with open('../httping_top10.txt', 'w') as file:
         # 遍历列表，写入每个IP地址，每个地址后面添加换行符
         for ip in top10_now_ips:
             file.write(ip + '\n')

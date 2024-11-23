@@ -25,14 +25,14 @@ def generate_ips_from_subnets(subnets, count):
     return random_ips
 
 # 从文件中读取子网列表
-subnets = read_subnets_from_file('/home/dnsupdate/hk_cidr_best.txt')
+subnets = read_subnets_from_file('../hk_cidr_best.txt')
 # 指定需要的IP数量
 count = 50
 
 # 生成随机IP地址
 random_ips = generate_ips_from_subnets(subnets, count)
 # 打印结果
-with open('/home/dnsupdate/sum_ip.txt', 'w') as file:
+with open('../sum_ip.txt', 'w') as file:
     # 遍历列表，写入每个IP地址，每个地址后面添加换行符
         for ip in random_ips:
             print(ip)

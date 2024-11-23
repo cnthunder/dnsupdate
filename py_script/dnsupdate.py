@@ -3,14 +3,23 @@ import traceback
 import json
 import requests
 import time
+import sys
 from datetime import datetime
 
 # 获取当前时间
 current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+#通过参数传递token文件名
+# 检查是否有足够的参数
+if len(sys.argv) != 2:
+    print("Usage: python dnsupdate.py <filename:token.ini>")
+    sys.exit(1)
+# 获取命令行参数作为配置文件名
+token_filename = sys.argv[1]
+
 # API 密钥
 token_ini = configparser.ConfigParser()
-token_ini.read('/home/dnsupdate/token.ini')
+token_ini.read(f'../{token_filename}')
 token = token_ini['CF']
 CF_API_TOKEN = token['CF_API_TOKEN']
 CF_ZONE_ID = token['CF_ZONE_ID']
@@ -29,8 +38,8 @@ speed_limit = 46
 speed_top = 50
 latency = 200
 # 定义测试结果文件名
-speed_top10 = '/home/dnsupdate/speed_top10.txt'
-top_speed_info = '/home/dnsupdate/top_speed_info.txt'
+speed_top10 = '../speed_top10.txt'
+top_speed_info = '../top_speed_info.txt'
 # 定义push_plus_content
 push_plus_content = []
 

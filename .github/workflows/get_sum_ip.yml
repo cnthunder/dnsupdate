@@ -23,7 +23,7 @@ jobs:
       - name: 'Install dependencies'
         run: if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
       - name: 'Run get_sum_ip script'
-        run: python get_sum_ip.py
+        run: python get_sum_ip_online.py
       - name: 'Push sum_ip.txt to master'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
