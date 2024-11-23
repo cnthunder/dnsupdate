@@ -14,16 +14,18 @@ def generate_random_ip(subnet):
     return random.choice(ips)
 
 def generate_ips_from_subnets(subnets, count):
-    # 确保count不超过子网列表的长度
-    count = min(count, len(subnets))
-    # 随机挑选子网
-    selected_subnets = random.sample(subnets, count)
+    # 如果count不超过子网列表的数量，直接随机选择子网
+    if count <= len(subnets):
+        selected_subnets = random.sample(subnets, count)
+    else:
+        # 如果count超过子网列表的数量，循环随机选择子网
+        selected_subnets = random.choices(subnets, k=count)
     # 从每个子网中随机挑选一个IP地址
     random_ips = [generate_random_ip(subnet) for subnet in selected_subnets]
     return random_ips
 
 # 从文件中读取子网列表
-subnets = read_subnets_from_file('hk_cidr_best.txt')
+subnets = read_subnets_from_file('../../hk_cidr_best.txt')
 print(subnets)
 # 指定需要的IP数量
 count = 10
@@ -32,7 +34,7 @@ count = 10
 random_ips = generate_ips_from_subnets(subnets, count)
 print(random_ips)
 # 打印结果
-with open('sum_ip.txt', 'w') as file:
+with open('../../sum_ip.txt', 'w') as file:
     # 遍历列表，写入每个IP地址，每个地址后面添加换行符
         for ip in random_ips:
             print(ip)

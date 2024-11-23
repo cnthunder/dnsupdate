@@ -51,7 +51,7 @@ def get_besfcf_ip(timeout=5, max_retries=3):
             print(f"get_cf_speed_test_ip Request failed (attempt {attempt + 1}/{max_retries}): {e}")
     # 如果所有尝试都失败，返回 None 或者抛出异常，根据需要进行处理
     return []
-#
+
 if __name__ == '__main__':
     cfips = get_optimization_ip()
     if cfips != []:
@@ -68,11 +68,12 @@ if __name__ == '__main__':
         print('bestcf获取成功')
     else:
         print('bestcf获取失败')
+    # 去重
     sum_ip_set = set(cfips + iptop + bestcf)
     sum_ip = list(sum_ip_set)
-
-    with open('sum_ip.txt', 'w') as file:
+    with open('/home/dnsupdate/sum_ip.txt', 'w') as file:
         # 遍历列表，写入每个IP地址，每个地址后面添加换行符
         for ip in sum_ip:
             file.write(ip + '\n')
     print('完成写入sum_ip.txt')
+
