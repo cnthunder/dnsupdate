@@ -19,7 +19,7 @@ token_filename = sys.argv[1]
 
 # API 密钥
 token_ini = configparser.ConfigParser()
-token_ini.read(f'../{token_filename}')
+token_ini.read(token_filename)
 token = token_ini['CF']
 CF_API_TOKEN = token['CF_API_TOKEN']
 CF_ZONE_ID = token['CF_ZONE_ID']
